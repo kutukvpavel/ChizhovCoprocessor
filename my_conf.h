@@ -8,7 +8,9 @@
 #include "OptPin.h"
 
 #define MY_I2C_ADDR 0x08
-#define MY_LED_PIN 4
+#define MY_LED_ARDUINO_PIN 4
+#define MY_LED_PORT PORTD
+#define MY_LED_MASK _BV(PD4)
 #define MY_PUMPS_NUM 3
 
 #define MY_ENCODERS_NUM MY_PUMPS_NUM

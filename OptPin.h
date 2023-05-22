@@ -18,8 +18,7 @@ inline void OPTdigitalWrite(uint8_t pin, bool val);
 inline bool OPTdigitalRead(uint8_t pin);
 //Sets ADMUX ASAP
 inline void OPTanalogReference(uint8_t val);
-//Accepts only channels! Refer to current MCU datasheet!
-uint16_t OPTanalogRead(uint8_t channel);
+uint16_t OPTanalogRead();
 
 // Safety checks and timer features removed
 inline void OPTdigitalWrite(uint8_t pin, bool val)
@@ -45,6 +44,7 @@ inline void OPTanalogReference(uint8_t val)
 	#endif
 }
 
+//Accepts only channels! Refer to current MCU datasheet!
 inline void OPTanalogChannel(uint8_t channel)
 {
 	// the MUX5 bit of ADCSRB selects whether we're reading from channels

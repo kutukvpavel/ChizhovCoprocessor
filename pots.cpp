@@ -19,7 +19,7 @@ namespace pots
     {
         static uint8_t channel_idx = 0;
 
-        results[channel_idx] = OPTanalogRead(adc_channels[channel_idx]);
+        results[channel_idx] = OPTanalogRead();
         if (++channel_idx >= MY_POTS_NUM) channel_idx = 0;
         OPTanalogChannel(adc_channels[channel_idx]);
     }

@@ -11,6 +11,7 @@ namespace i2c
         long encoder_pos[MY_ENCODERS_NUM];
         uint16_t manual_override;
         uint8_t drv_error_bitfield;
+        uint8_t drv_present_bitfield;
     };
     static memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
@@ -18,14 +19,11 @@ namespace i2c
         .drv_error_bitfield = 0
     };
 
-    void request_response()
+    void request_response() //This runs in an interrupt context
     {
         static uint8_t buffer[sizeof(map)];
         
-        cli();
         memcpy(buffer, &map, sizeof(buffer));
-        sei();
-
         Wire.write(buffer, sizeof(buffer));
     }
 
@@ -37,19 +35,46 @@ namespace i2c
         Wire.onRequest(request_response);
     }
 
+    void set_drv_present_bit(uint8_t i, bool v)
+    {
+        if (v)
+        {
+            cli();
+            map.drv_present_bitfield |= _BV(i);
+            sei();
+        }
+        else
+        {
+            cli();
+            map.drv_present_bitfield &= ~_BV(i);
+            sei();
+        }
+    }
     void set_drv_err_bit(uint8_t i, bool v)
     {
         if (v)
         {
+            cli();
             map.drv_error_bitfield |= _BV(i);
+            sei();
         }
         else
         {
+            cli();
             map.drv_error_bitfield &= ~_BV(i);
+            sei();
         }
     }
     void set_manual_override(uint16_t v)
     {
+        cli();
         map.manual_override = v;
+        sei();
+    }
+    void set_encoder_position(uint8_t i, long v)
+    {
+        cli();
+        map.encoder_pos[i] = v;
+        sei();
     }
 } // namespace i2c
