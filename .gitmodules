@@ -1,0 +1,3 @@
+[submodule "src/average"]
+	path = src/average
+	url = https://github.com/kutukvpavel/average_lib.git

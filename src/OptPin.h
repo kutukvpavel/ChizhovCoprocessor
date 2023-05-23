@@ -71,8 +71,7 @@ uint16_t OPTanalogRead(uint8_t channel); //Probably inlining it is not a good id
 
 #endif
 
-#include <stdint.h>
-#include <stddef.h>
+#include "user.h"
 
 //Templates
 #ifdef ARRAYSIZE_UINT8

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <stdint.h>
-#include <stddef.h>
+#include "user.h"
 
 #include "RotaryEncoder.h"
 #include "OptPin.h"

@@ -2,13 +2,14 @@
 #include <Wire.h>
 #include <avr/wdt.h>
 
-#include "OptPin.h"
+#include "src/OptPin.h"
 
-#include "drv.h"
-#include "pots.h"
-#include "i2c_interface.h"
-#include "encoders.h"
-#include "my_conf.h"
+#include "src/drv.h"
+#include "src/pots.h"
+#include "src/i2c_interface.h"
+#include "src/encoders.h"
+#include "src/my_conf.h"
+#include "src/user.h"
 
 #define MY_HEARTBEAT_PERIOD 1000 //ms
 
@@ -34,6 +35,7 @@ void loop()
     //Encoder and I2C processing run asynchronously (interrupt-based)
     //This loop has to execute the rest: drive polling (low-frequency task) and pot polling (high-freq task)
     //Last but not least: status LED
+
     static uint16_t led_counter = 0;
 
     drv::poll();
