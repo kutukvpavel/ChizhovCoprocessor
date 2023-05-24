@@ -15,17 +15,25 @@
 
 void setup()
 {
+    wdt_reset();
+    delay(1);
+    wdt_enable(WDTO_1S);
+
     //Init status LED
     pinMode(MY_LED_ARDUINO_PIN, OUTPUT);
 
     //Init I2C interface
     i2c::init();
+    wdt_reset();
     //Init drive serial
     drv::init();
+    wdt_reset();
     //Init encoders
     encoders::init();
+    wdt_reset();
     //Init pots
     pots::init();
+    wdt_reset();
 
     digitalWrite(MY_LED_ARDUINO_PIN, HIGH); //Open-collector-like
 }
@@ -36,7 +44,7 @@ void loop()
     //This loop has to execute the rest: drive polling (low-frequency task) and pot polling (high-freq task)
     //Last but not least: status LED
 
-    static uint16_t led_counter = 0;
+    static unsigned long last_led_toggle = 0;
 
     drv::poll();
     for (size_t i = 0; i < MY_DRIVES_NUM; i++)
@@ -44,14 +52,15 @@ void loop()
         i2c::set_drv_err_bit(i, drv::get_drv_err(i));
         i2c::set_drv_present_bit(i, drv::get_drv_present(i));
     }
+    wdt_reset();
 
     pots::poll();
     i2c::set_manual_override(pots::get_manual_override());
 
-    if (led_counter++ > (MY_HEARTBEAT_PERIOD / 2))
+    if ((millis() - last_led_toggle) > (MY_HEARTBEAT_PERIOD / 2))
     {
         MY_LED_PORT ^= MY_LED_MASK;
-        led_counter = 0;
+        last_led_toggle = millis();
     }
 
 	wdt_reset();

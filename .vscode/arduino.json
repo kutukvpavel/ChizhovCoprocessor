@@ -2,5 +2,7 @@
     "sketch": "ChizhovCoprocessor.ino",
     "output": "build",
     "configuration": "cpu=16MHzatmega328",
-    "board": "arduino:avr:pro"
+    "board": "arduino:avr:pro",
+    "port": "/dev/ttyUSB0",
+    "programmer": "arduinoisp"
 }
