@@ -4,9 +4,9 @@
 #include "OptPin.h"
 #include "my_conf.h"
 
-#define MY_DRV_BUF_LEN 16
-#define MY_DRV_RESPONSE_TIMEOUT 5 //ms
-#define MY_STATUS_RSP_LEN 3
+#define MY_DRV_BUF_LEN 16_ui8
+#define MY_DRV_RESPONSE_TIMEOUT 5_ui8 //ms
+#define MY_STATUS_RSP_LEN 3_ui8
 
 namespace drv
 {
@@ -31,6 +31,10 @@ namespace drv
         const char dbg_greeting[] = "Goodnight moon!\n";
 
         for (auto &&i : err)
+        {
+            i = false;
+        }
+        for (auto &&i : present)
         {
             i = false;
         }
@@ -108,7 +112,7 @@ namespace drv
         static uint8_t drv_idx = 0;
         static bool read_phase = false;
 
-        if (drv_idx == 0)
+        if (drv_idx >= MY_DRIVES_NUM) //Debug header
         {
             if (read_phase)
             {
@@ -116,6 +120,7 @@ namespace drv
             }
             else
             {
+                set_addr(0);
                 Serial.write(dbg_heartbeat);
             }
         }
@@ -124,25 +129,27 @@ namespace drv
             if (read_phase)
             {
                 uint8_t i = MY_DRV_RESPONSE_TIMEOUT;
-                while ((Serial.available() < rsp_length[drv_cmds::read_shaft_status]) && i--)
+                while ((Serial.available() < rsp_length[drv_cmds::read_shaft_status]) && (i > 0))
                 {
                     delay(1);
+                    --i;
                 };
                 bool p = i > 0;
                 present[drv_idx] = p;
                 if (p) err[drv_idx] = parse_shaft_status_response(drv_idx);
+                else err[drv_idx] = false;
                 discard_in_buffer();
             }
             else
             {
-                set_addr(drv_idx);
+                set_addr(drv_idx + 1_ui8);
                 delayMicroseconds(1);
                 Serial.write(get_drv_command(drv_cmds::read_shaft_status, drv_idx));
             }
         }
         if (read_phase)
         {
-            if (++drv_idx >= MY_DRIVES_NUM) drv_idx = 0;
+            if (++drv_idx >= (MY_DRIVES_NUM + 1_ui8)) drv_idx = 0;
             read_phase = false;
         }
         else
