@@ -66,7 +66,7 @@ RotaryEncoder::RotaryEncoder(const RotaryEncoder::conf_t* cfg)
 } // RotaryEncoder()
 
 
-long RotaryEncoder::getPosition()
+unsigned long RotaryEncoder::getPosition()
 {
   return _positionExt;
 } // getPosition()
