@@ -8,7 +8,7 @@ namespace i2c
 {
     struct memory_map_t
     {
-        long encoder_pos[MY_ENCODERS_NUM];
+        uint32_t encoder_pos[MY_ENCODERS_NUM];
         uint16_t manual_override;
         uint8_t drv_error_bitfield;
         uint8_t drv_missing_bitfield;
@@ -81,7 +81,7 @@ namespace i2c
         map.manual_override = v;
         sei();
     }
-    void set_encoder_position(uint8_t i, long v)
+    void set_encoder_position(uint8_t i, unsigned long v)
     {
         cli();
         map.encoder_pos[i] = v;

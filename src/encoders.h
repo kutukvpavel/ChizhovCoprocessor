@@ -7,4 +7,6 @@
 namespace encoders
 {
     void init();
+
+    unsigned long get_position(uint8_t i);
 } // namespace encoders

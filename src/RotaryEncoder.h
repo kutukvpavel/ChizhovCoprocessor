@@ -56,7 +56,7 @@ public:
   RotaryEncoder(const conf_t* cfg);
 
   // retrieve the current position
-  long getPosition();
+  unsigned long getPosition();
 
   // simple retrieve of the direction the knob was rotated last time. 0 = No rotation, 1 = Clockwise, -1 = Counter Clockwise
   Direction getDirection();
@@ -78,9 +78,9 @@ private:
 
   volatile int8_t _oldState;
 
-  volatile long _position;        // Internal position (4 times _positionExt)
-  volatile long _positionExt;     // External position
-  volatile long _positionExtPrev; // External position (used only for direction checking)
+  volatile unsigned long _position;        // Internal position (4 times _positionExt)
+  volatile unsigned long _positionExt;     // External position
+  volatile unsigned long _positionExtPrev; // External position (used only for direction checking)
 
   unsigned long _positionExtTime;     // The time the last position change was detected.
   unsigned long _positionExtTimePrev; // The time the previous position change was detected.

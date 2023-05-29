@@ -31,13 +31,10 @@ void setup()
 
     //Init I2C interface
     i2c::init();
-    wdt_reset();
     //Init drive serial
     drv::init();
-    wdt_reset();
     //Init encoders
     encoders::init();
-    wdt_reset();
     //Init pots
     pots::init();
     wdt_reset();
@@ -55,17 +52,18 @@ void loop()
     drv::poll();
     for (size_t i = 0; i < MY_DRIVES_NUM; i++)
     {
+        static_assert(MY_DRIVES_NUM == MY_ENCODERS_NUM);
+
         i2c::set_drv_err_bit(i, drv::get_drv_err(i));
         i2c::set_drv_missing_bit(i, !drv::get_drv_present(i));
+        i2c::set_encoder_position(i, encoders::get_position(i));
     }
     status = led_status::OK;
     if (i2c::get_drv_missing() > 0) status = led_status::drive_missing;
     if (i2c::get_drv_err() > 0) status = led_status::drive_error;
-    wdt_reset();
 
     pots::poll();
     i2c::set_manual_override(pots::get_manual_override());
-	wdt_reset();
 
     supervize_led(status);
 	wdt_reset();

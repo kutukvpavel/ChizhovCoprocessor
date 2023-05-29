@@ -16,4 +16,9 @@ namespace encoders
             instances[i] = new RotaryEncoder(&(config[i]));
         }
     }
+
+    unsigned long get_position(uint8_t i)
+    {
+        return instances[i]->getPosition();
+    }
 } // namespace encoders
