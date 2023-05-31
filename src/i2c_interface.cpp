@@ -9,16 +9,19 @@ namespace i2c
     struct memory_map_t
     {
         uint32_t encoder_pos[MY_ENCODERS_NUM];
+        uint8_t encoder_btn_pressed;
         uint16_t manual_override;
         uint8_t drv_error_bitfield;
         uint8_t drv_missing_bitfield;
     };
     static memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
+        .encoder_btn_pressed = 0,
         .manual_override = 1000,
         .drv_error_bitfield = 0,
         .drv_missing_bitfield = 0
     };
+    static volatile bool mask_buttons = false;
 
     void request_response() //This runs in an interrupt context
     {
@@ -26,6 +29,7 @@ namespace i2c
         
         memcpy(buffer, &map, sizeof(buffer));
         Wire.write(buffer, sizeof(buffer));
+        mask_buttons = true;
     }
 
     void init()
@@ -50,13 +54,13 @@ namespace i2c
         if (v)
         {
             cli();
-            map.drv_missing_bitfield |= _BV(i);
+            map.drv_missing_bitfield |= BV8(i);
             sei();
         }
         else
         {
             cli();
-            map.drv_missing_bitfield &= ~_BV(i);
+            map.drv_missing_bitfield &= ~BV8(i);
             sei();
         }
     }
@@ -65,13 +69,13 @@ namespace i2c
         if (v)
         {
             cli();
-            map.drv_error_bitfield |= _BV(i);
+            map.drv_error_bitfield |= BV8(i);
             sei();
         }
         else
         {
             cli();
-            map.drv_error_bitfield &= ~_BV(i);
+            map.drv_error_bitfield &= ~BV8(i);
             sei();
         }
     }
@@ -85,6 +89,23 @@ namespace i2c
     {
         cli();
         map.encoder_pos[i] = v;
+        sei();
+    }
+    void set_encoder_button(uint8_t i, bool v)
+    {
+        static uint8_t buttons_read = 0;
+
+        cli();
+        if (mask_buttons)
+        {
+            buttons_read = map.encoder_btn_pressed;
+            map.encoder_btn_pressed = 0;
+            mask_buttons = false;
+        }
+        //Mask out buttons already read as pressed, until let go
+        uint8_t mask = BV8(i);
+        if (v) map.encoder_btn_pressed |= mask & static_cast<uint8_t>(~buttons_read);
+        else buttons_read &= ~mask;
         sei();
     }
 } // namespace i2c

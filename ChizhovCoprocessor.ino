@@ -64,6 +64,11 @@ void loop()
 
     pots::poll();
     i2c::set_manual_override(pots::get_manual_override());
+    encoders::poll_buttons();
+    for (size_t i = 0; i < MY_ENCODERS_NUM; i++)
+    {
+        i2c::set_encoder_button(i, encoders::get_button_pressed(i));
+    }
 
     supervize_led(status);
 	wdt_reset();
