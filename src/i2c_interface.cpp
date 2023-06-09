@@ -4,20 +4,25 @@
 #include <Wire.h>
 #include "my_conf.h"
 
+#include "util/crc16.h"
+
+#define COPROCESSOR_INIT_BYTE 0xA0
+
 namespace i2c
 {
     struct memory_map_t
     {
         uint16_t encoder_pos[MY_ENCODERS_NUM];
-        uint8_t encoder_btn_pressed;
         uint16_t manual_override;
+        uint8_t encoder_btn_pressed;
         uint8_t drv_error_bitfield;
         uint8_t drv_missing_bitfield;
+        uint8_t crc; //Convinient for alignment
     };
-    static memory_map_t map = {
+    static volatile memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
-        .encoder_btn_pressed = 0,
         .manual_override = 1000,
+        .encoder_btn_pressed = 0,
         .drv_error_bitfield = 0,
         .drv_missing_bitfield = 0
     };
@@ -28,13 +33,19 @@ namespace i2c
     {
         static uint8_t buffer[sizeof(map)];
         
-        memcpy(buffer, &map, sizeof(buffer));
+        memcpy(buffer, &map, sizeof(buffer) - 1); //Excluding last CRC byte
+        map.crc = 0xFF;
+        for (uint8_t i = 0; i < (sizeof(buffer) - 1); i++)
+        {
+            map.crc = _crc8_ccitt_update(map.crc, buffer[i]);
+        }
+        buffer[sizeof(buffer) - 1] = map.crc;
         Wire.write(buffer, sizeof(buffer));
         mask_buttons = true;
     }
     void receive(int data)
     {
-        connected = ((data & 0xFF) == 0xA0);
+        connected = ((data & 0xFF) == COPROCESSOR_INIT_BYTE);
     }
 
     void init()
