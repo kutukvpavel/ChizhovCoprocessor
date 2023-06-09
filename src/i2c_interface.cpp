@@ -34,7 +34,7 @@ namespace i2c
     }
     void receive(int data)
     {
-        connected = true; //Any write request from master confirms connection, since we have no handshake
+        connected = ((data & 0xFF) == 0xA0);
     }
 
     void init()
