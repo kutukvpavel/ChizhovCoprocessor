@@ -8,7 +8,7 @@ namespace encoders
 {
     void init();
 
-    unsigned long get_position(uint8_t i);
+    uint16_t get_position(uint8_t i);
     bool get_button_pressed(uint8_t i);
     void poll_buttons();
 } // namespace encoders

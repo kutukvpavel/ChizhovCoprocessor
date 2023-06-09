@@ -16,6 +16,7 @@ enum class led_status : uint8_t
     OK = 0,
     drive_missing,
     drive_error,
+    init,
 
     LEN
 };
@@ -61,6 +62,7 @@ void loop()
     status = led_status::OK;
     if (i2c::get_drv_missing() > 0) status = led_status::drive_missing;
     if (i2c::get_drv_err() > 0) status = led_status::drive_error;
+    if (!i2c::get_connected()) status = led_status::init;
 
     pots::poll();
     i2c::set_manual_override(pots::get_manual_override());
@@ -76,12 +78,18 @@ void loop()
 
 void supervize_led(led_status s)
 {
-    const uint16_t period_database[static_cast<uint8_t>(led_status::LEN)] = { 1000, 2600, 400 };
+    static const uint16_t period_short[static_cast<uint8_t>(led_status::LEN)] = { 500, 1300, 200, 200 };
+    static const uint16_t period_long[static_cast<uint8_t>(led_status::LEN)] = { 500, 1300, 200, 1500 };
+    static const uint16_t* const period_db[] = { period_short, period_long };
     static unsigned long last_led_toggle = 0;
+    static uint8_t period_type = 0;
 
-    if ((millis() - last_led_toggle) > (period_database[static_cast<uint8_t>(s)] / 2u))
+    static_assert(arraySize(period_db) == 2);
+
+    if ((millis() - last_led_toggle) > period_db[period_type][static_cast<uint8_t>(s)])
     {
-        MY_LED_PORT ^= MY_LED_MASK;
         last_led_toggle = millis();
+        MY_LED_PORT ^= MY_LED_MASK;
+        period_type ^= 1_ui8;
     }
 }

@@ -30,12 +30,6 @@ public:
     COUNTERCLOCKWISE = -1
   };
 
-  enum class LatchMode {
-    FOUR3 = 1, // 4 steps, Latch at position 3 only (compatible to older versions)
-    FOUR0 = 2, // 4 steps, Latch at position 0 (reverse wirings)
-    TWO03 = 3  // 2 steps, Latch at position 0 and 3 
-  };
-
   struct button_conf_t
   {
     uint8_t pcint_group;
@@ -48,7 +42,6 @@ public:
     uint8_t pcint_mask;
     const pin_t pin1;
     const pin_t pin2;
-    RotaryEncoder::LatchMode mode;
     button_conf_t btn;
   };
 
@@ -56,34 +49,49 @@ public:
   RotaryEncoder(const conf_t* cfg);
 
   // retrieve the current position
-  unsigned long getPosition();
+  uint16_t getPosition();
 
   // simple retrieve of the direction the knob was rotated last time. 0 = No rotation, 1 = Clockwise, -1 = Counter Clockwise
   Direction getDirection();
 
   // adjust the current position
-  void setPosition(long newPosition);
+  void setPosition(uint16_t newPosition);
 
   // call this function every some milliseconds or by using an interrupt for handling state changes of the rotary encoder.
-  void tick(void);
+  inline bool RotaryEncoder::tick()
+  {
+    // The array holds the values �1 for the entries where a position was decremented,
+    // a 1 for the entries where the position was incremented
+    // and 0 in all the other (no change or not valid) cases.
 
-  // Returns the time in milliseconds between the current observed
-  unsigned long getMillisBetweenRotations() const;
+    // positions: [3] 1 0 2 [3] 1 0 2 [3]
+    // [3] is the positions where my rotary switch detends
+    // ==> right, count up
+    // <== left,  count down
+    static const int8_t KNOBDIR[] = {
+      0, -1, 1, 0,
+      1, 0, 0, -1,
+      -1, 0, 0, 1,
+      0, 1, -1, 0};
 
-  // Returns the RPM
-  unsigned long getRPM();
+    uint8_t thisState = static_cast<uint8_t>(pin_t::Read(&config->pin1)) | 
+      static_cast<uint8_t>(static_cast<uint8_t>(pin_t::Read(&config->pin2)) << 1_ui8);
+
+    if (_oldState == thisState) return false;
+
+    _positionExt += KNOBDIR[static_cast<uint8_t>(thisState | static_cast<uint8_t>(_oldState << 2_ui8))];
+    _oldState = thisState;
+    
+    return true;
+  } // tick()
 
 private:
   const conf_t* config;
 
-  volatile int8_t _oldState;
+  volatile uint8_t _oldState;
 
-  volatile unsigned long _position;        // Internal position (4 times _positionExt)
-  volatile unsigned long _positionExt;     // External position
-  volatile unsigned long _positionExtPrev; // External position (used only for direction checking)
-
-  unsigned long _positionExtTime;     // The time the last position change was detected.
-  unsigned long _positionExtTimePrev; // The time the previous position change was detected.
+  volatile uint16_t _positionExt;     // External position
+  volatile uint16_t _positionExtPrev; // External position (used only for direction checking)
 };
 
 #endif

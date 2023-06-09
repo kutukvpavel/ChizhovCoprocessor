@@ -8,7 +8,7 @@ namespace i2c
 {
     struct memory_map_t
     {
-        uint32_t encoder_pos[MY_ENCODERS_NUM];
+        uint16_t encoder_pos[MY_ENCODERS_NUM];
         uint8_t encoder_btn_pressed;
         uint16_t manual_override;
         uint8_t drv_error_bitfield;
@@ -22,6 +22,7 @@ namespace i2c
         .drv_missing_bitfield = 0
     };
     static volatile bool mask_buttons = false;
+    static volatile bool connected = false;
 
     void request_response() //This runs in an interrupt context
     {
@@ -31,6 +32,10 @@ namespace i2c
         Wire.write(buffer, sizeof(buffer));
         mask_buttons = true;
     }
+    void receive(int data)
+    {
+        connected = true; //Any write request from master confirms connection, since we have no handshake
+    }
 
     void init()
     {
@@ -38,6 +43,11 @@ namespace i2c
 
         Wire.begin(MY_I2C_ADDR);
         Wire.onRequest(request_response);
+        Wire.onReceive(receive);
+    }
+    bool get_connected()
+    {
+        return connected;
     }
 
     uint8_t get_drv_err()
@@ -85,7 +95,7 @@ namespace i2c
         map.manual_override = v;
         sei();
     }
-    void set_encoder_position(uint8_t i, unsigned long v)
+    void set_encoder_position(uint8_t i, uint16_t v)
     {
         cli();
         map.encoder_pos[i] = v;

@@ -21,7 +21,6 @@ namespace encoders
             .pcint_mask = _BV(PCINT4) | _BV(PCINT5),
             .pin1 = pin_t(DDRB, PB4),
             .pin2 = pin_t(DDRB, PB5),
-            .mode = RotaryEncoder::LatchMode::FOUR3,
             .btn = {
                 .pcint_group = PCIE1,
                 .pcint_mask = _BV(PCINT8),
@@ -33,7 +32,6 @@ namespace encoders
             .pcint_mask = _BV(PCINT2) | _BV(PCINT3),
             .pin1 = pin_t(DDRB, PB2),
             .pin2 = pin_t(DDRB, PB3),
-            .mode = RotaryEncoder::LatchMode::FOUR3,
             .btn = {
                 .pcint_group = PCIE1,
                 .pcint_mask = _BV(PCINT8),
@@ -45,7 +43,6 @@ namespace encoders
             .pcint_mask = _BV(PCINT0) | _BV(PCINT1),
             .pin1 = pin_t(DDRB, PB0),
             .pin2 = pin_t(DDRB, PB1),
-            .mode = RotaryEncoder::LatchMode::FOUR3,
             .btn = {
                 .pcint_group = PCIE1,
                 .pcint_mask = _BV(PCINT8),

@@ -16,26 +16,6 @@
 #include "Arduino.h"
 #include "OptPin.h"
 
-#define LATCH0 0 // input state at position 0
-#define LATCH3 3 // input state at position 3
-
-
-// The array holds the values �1 for the entries where a position was decremented,
-// a 1 for the entries where the position was incremented
-// and 0 in all the other (no change or not valid) cases.
-
-const int8_t KNOBDIR[] = {
-    0, -1, 1, 0,
-    1, 0, 0, -1,
-    -1, 0, 0, 1,
-    0, 1, -1, 0};
-
-
-// positions: [3] 1 0 2 [3] 1 0 2 [3]
-// [3] is the positions where my rotary switch detends
-// ==> right, count up
-// <== left,  count down
-
 
 // ----- Initialization and Default Values -----
 
@@ -56,7 +36,7 @@ RotaryEncoder::RotaryEncoder(const RotaryEncoder::conf_t* cfg)
   _oldState = pin_t::Read(&config->pin1) | (pin_t::Read(&config->pin2) << 1);
 
   // start with position 0;
-  _position = 0;
+  //_position = 0;
   _positionExt = 0;
   _positionExtPrev = 0;
 
@@ -66,7 +46,7 @@ RotaryEncoder::RotaryEncoder(const RotaryEncoder::conf_t* cfg)
 } // RotaryEncoder()
 
 
-unsigned long RotaryEncoder::getPosition()
+uint16_t RotaryEncoder::getPosition()
 {
   return _positionExt;
 } // getPosition()
@@ -91,81 +71,11 @@ RotaryEncoder::Direction RotaryEncoder::getDirection()
 }
 
 
-void RotaryEncoder::setPosition(long newPosition)
+void RotaryEncoder::setPosition(uint16_t newPosition)
 {
-  switch (config->mode) {
-  case LatchMode::FOUR3:
-  case LatchMode::FOUR0:
-    // only adjust the external part of the position.
-    _position = ((newPosition << 2) | (_position & 0x03L));
     _positionExt = newPosition;
     _positionExtPrev = newPosition;
-    break;
-
-  case LatchMode::TWO03:
-    // only adjust the external part of the position.
-    _position = ((newPosition << 1) | (_position & 0x01L));
-    _positionExt = newPosition;
-    _positionExtPrev = newPosition;
-    break;
-  } // switch
-
 } // setPosition()
-
-
-void RotaryEncoder::tick(void)
-{
-  int8_t thisState = pin_t::Read(&config->pin1) | (pin_t::Read(&config->pin2) << 1);
-
-  if (_oldState != thisState) {
-    _position += KNOBDIR[thisState | (_oldState << 2)];
-    _oldState = thisState;
-
-    switch (config->mode) {
-    case LatchMode::FOUR3:
-      if (thisState == LATCH3) {
-        // The hardware has 4 steps with a latch on the input state 3
-        _positionExt = _position >> 2;
-        _positionExtTimePrev = _positionExtTime;
-        _positionExtTime = millis();
-      }
-      break;
-
-    case LatchMode::FOUR0:
-      if (thisState == LATCH0) {
-        // The hardware has 4 steps with a latch on the input state 0
-        _positionExt = _position >> 2;
-        _positionExtTimePrev = _positionExtTime;
-        _positionExtTime = millis();
-      }
-      break;
-
-    case LatchMode::TWO03:
-      if ((thisState == LATCH0) || (thisState == LATCH3)) {
-        // The hardware has 2 steps with a latch on the input state 0 and 3
-        _positionExt = _position >> 1;
-        _positionExtTimePrev = _positionExtTime;
-        _positionExtTime = millis();
-      }
-      break;
-    } // switch
-  } // if
-} // tick()
-
-
-unsigned long RotaryEncoder::getMillisBetweenRotations() const
-{
-  return (_positionExtTime - _positionExtTimePrev);
-}
-
-unsigned long RotaryEncoder::getRPM()
-{
-  // calculate max of difference in time between last position changes or last change and now.
-  unsigned long timeBetweenLastPositions = _positionExtTime - _positionExtTimePrev;
-  unsigned long timeToLastPosition = millis() - _positionExtTime;
-  unsigned long t = max(timeBetweenLastPositions, timeToLastPosition);
-  return 60000.0 / ((float)(t * 20));
-}
 
 
 // End

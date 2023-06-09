@@ -1,3 +1,6 @@
 [submodule "src/average"]
 	path = src/average
 	url = https://github.com/kutukvpavel/average_lib.git
+[submodule "src/encoder"]
+	path = src/encoder
+	url = https://github.com/kutukvpavel/encoder.git

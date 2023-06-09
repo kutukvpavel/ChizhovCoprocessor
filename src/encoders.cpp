@@ -14,8 +14,8 @@ namespace encoders
     };
     static bool button_initial[MY_ENCODERS_NUM];
 
-    RotaryEncoder* instances[MY_ENCODERS_NUM];
-    bool buttons[MY_ENCODERS_NUM] = { 0 };
+    static RotaryEncoder* instances[MY_ENCODERS_NUM];
+    static bool buttons[MY_ENCODERS_NUM] = { 0 };
 
     void init()
     {
@@ -29,7 +29,7 @@ namespace encoders
         }
     }
 
-    unsigned long get_position(uint8_t i)
+    uint16_t get_position(uint8_t i)
     {
         return instances[i]->getPosition();
     }
@@ -61,3 +61,14 @@ namespace encoders
         return buttons[i];    
     }
 } // namespace encoders
+
+#pragma GCC push_options
+#pragma GCC optimize ("unroll-loops")
+ISR(PCINT0_vect) //Cross-check with RotaryEncoder config (PCINT groups, currently only PCIE0 is used => PCINT0)
+{
+    for (uint8_t i = 0; i < MY_ENCODERS_NUM; i++)
+    {
+        if (encoders::instances[i]->tick()) return;
+    }
+}
+#pragma GCC pop_options
