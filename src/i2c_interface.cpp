@@ -45,7 +45,8 @@ namespace i2c
     }
     void receive(int data)
     {
-        connected = ((data & 0xFF) == COPROCESSOR_INIT_BYTE);
+        uint8_t b = static_cast<uint8_t>(Wire.read() & 0xFF);
+        connected = (b == COPROCESSOR_INIT_BYTE);
     }
 
     void init()

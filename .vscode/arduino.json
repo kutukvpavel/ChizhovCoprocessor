@@ -3,6 +3,6 @@
     "output": "build",
     "configuration": "cpu=16MHzatmega328",
     "board": "arduino:avr:pro",
-    "port": "/dev/ttyUSB0",
+    "port": "/dev/ttyUSB1",
     "programmer": "arduinoisp"
 }
