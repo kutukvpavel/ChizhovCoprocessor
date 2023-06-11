@@ -19,7 +19,7 @@ namespace i2c
         uint8_t drv_missing_bitfield;
         uint8_t crc; //Convinient for alignment
     };
-    static volatile memory_map_t map = {
+    static memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
         .manual_override = 1000,
         .encoder_btn_pressed = 0,

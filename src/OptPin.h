@@ -34,31 +34,10 @@ inline bool OPTdigitalRead(uint8_t pin)
 	return (*portInputRegister(digitalPinToPort(pin)) & digitalPinToBitMask(pin)) > 0;
 }
 
-//Sets ADMUX ASAP
-inline void OPTanalogReference(uint8_t val)
-{
-	#if defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-	ADMUX = val << 4;
-	#else
-	ADMUX = val << 6;
-	#endif
-}
-
 //Accepts only channels! Refer to current MCU datasheet!
-inline void OPTanalogChannel(uint8_t channel)
+inline void OPTsetADMUX(uint8_t analog_reference, uint8_t channel)
 {
-	// the MUX5 bit of ADCSRB selects whether we're reading from channels
-	// 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
-	#if defined(ADCSRB) && defined(MUX5)
-	if (channel > 7_ui8) {
-		ADCSRB |= static_cast<uint8_t>(_BV(MUX5));
-		channel &= 7_ui8;
-	}
-	#endif
-	// set the analog reference (high two bits of ADMUX) and select the
-	// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
-	// to 0 (the default).
-	ADMUX |= channel;
+	ADMUX = static_cast<uint8_t>(analog_reference << static_cast<uint8_t>(6u)) | channel;
 }
 
 //Accepts only channels! Refer to current MCU datasheet!

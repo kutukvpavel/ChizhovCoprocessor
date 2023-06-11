@@ -17,8 +17,7 @@ namespace pots
             results[i] = new average(averaging_len);
         }
 
-        OPTanalogReference(EXTERNAL);
-        OPTanalogChannel(adc_channels[0]);
+        OPTsetADMUX(EXTERNAL, adc_channels[0]);
     }
 
     void poll()
@@ -27,7 +26,7 @@ namespace pots
 
         results[channel_idx]->enqueue(OPTanalogRead());
         if (++channel_idx >= MY_POTS_NUM) channel_idx = 0;
-        OPTanalogChannel(adc_channels[channel_idx]);
+        OPTsetADMUX(EXTERNAL, adc_channels[channel_idx]);
     }
 
     uint16_t get_manual_override()

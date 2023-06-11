@@ -66,5 +66,5 @@ namespace pots
 {
     const uint8_t averaging_len = 16;
     const uint8_t manual_override_idx = 0;
-    const uint8_t adc_channels[MY_POTS_NUM] = { 4 };
+    const uint8_t adc_channels[MY_POTS_NUM] = { 6 /*, 7*/ };
 } // namespace pots
