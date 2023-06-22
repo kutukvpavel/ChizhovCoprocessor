@@ -19,14 +19,13 @@ namespace i2c
         uint8_t drv_missing_bitfield;
         uint8_t crc; //Convinient for alignment
     };
-    static memory_map_t map = {
+    static volatile memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
         .manual_override = 1000,
         .encoder_btn_pressed = 0,
         .drv_error_bitfield = 0,
         .drv_missing_bitfield = 0
     };
-    static volatile bool mask_buttons = false;
     static volatile bool connected = false;
 
     void request_response() //This runs in an interrupt context
@@ -41,7 +40,7 @@ namespace i2c
         }
         buffer[sizeof(buffer) - 1] = map.crc;
         Wire.write(buffer, sizeof(buffer));
-        mask_buttons = true;
+        map.encoder_btn_pressed = 0;
     }
     void receive(int data)
     {
@@ -115,19 +114,21 @@ namespace i2c
     }
     void set_encoder_button(uint8_t i, bool v)
     {
-        static uint8_t buttons_read = 0;
+        static uint8_t buttons_mask = 0xFF; //Inverted
 
         cli();
-        if (mask_buttons)
-        {
-            buttons_read = map.encoder_btn_pressed;
-            map.encoder_btn_pressed = 0;
-            mask_buttons = false;
-        }
         //Mask out buttons already read as pressed, until let go
         uint8_t mask = BV8(i);
-        if (v) map.encoder_btn_pressed |= mask & static_cast<uint8_t>(~buttons_read);
-        else buttons_read &= ~mask;
+        if (v) 
+        {
+            map.encoder_btn_pressed |= mask & buttons_mask;
+            buttons_mask &= ~mask;
+        }
+        else
+        {
+            //map.encoder_btn_pressed &= ~mask; I2C ISR handler clears this register, this ensures no missed presses
+            buttons_mask |= mask;
+        }
         sei();
     }
 } // namespace i2c

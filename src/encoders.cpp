@@ -36,7 +36,7 @@ namespace encoders
     void poll_buttons()
     {
         const uint32_t poll_interval = 15; //ms
-        const uint8_t debounce_intervals = 4;
+        const uint8_t debounce_intervals = 2;
 
         static uint32_t last_poll = 0;
         static uint8_t debounce[MY_ENCODERS_NUM] = { 0 };
