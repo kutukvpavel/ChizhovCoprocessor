@@ -7,18 +7,21 @@
 #define MY_DRV_BUF_LEN 16_ui8
 #define MY_DRV_RESPONSE_TIMEOUT 5_ui8 //ms
 #define MY_STATUS_RSP_LEN 3_ui8
+#define MY_LOAD_ERR_RSP_LEN 4_ui8
 
 namespace drv
 {
     enum drv_cmds : uint8_t
     {
         read_shaft_status = 0,
+        read_shaft_error,
 
         CMDS_NUM
     };
 
     bool err[MY_DRIVES_NUM];
     bool present[MY_DRIVES_NUM];
+    int16_t load[MY_DRIVES_NUM];
 
     void discard_in_buffer()
     {
@@ -71,7 +74,8 @@ namespace drv
     const char* get_drv_command(drv_cmds c, uint8_t station_idx)
     {
         const uint8_t command_bytes[drv_cmds::CMDS_NUM] = {
-            0x3E
+            0x3E,
+            0x39
         };
         static uint8_t buffer[MY_DRV_BUF_LEN];
 
@@ -102,15 +106,43 @@ namespace drv
         if (sum != static_cast<uint8_t>(Serial.read())) return true;
         return res;
     }
+    int16_t parse_shaft_error_response(uint8_t drv_idx)
+    {
+        static const uint16_t error_code = 0xFFFF;
+
+        uint8_t sum = 0;
+        uint16_t res;
+        for (uint8_t i = 0; i < (MY_LOAD_ERR_RSP_LEN - 1); i++)
+        {
+            uint8_t current = static_cast<uint8_t>(Serial.read());
+            sum += current;
+            if (i == 0)
+            {
+                if (current != station_addrs[drv_idx]) return error_code;
+            }
+            else if (i == 1)
+            {
+                res = static_cast<uint16_t>(current) << 8;
+            }
+            else if (i == 2)
+            {
+                res |= current;
+            }
+        }
+        if (sum != static_cast<uint8_t>(Serial.read())) return error_code;
+        return static_cast<int16_t>(res);
+    }
 
     void poll()
     {
         const char dbg_heartbeat[] = ">\n";
         const uint8_t rsp_length[drv_cmds::CMDS_NUM] = {
-            MY_STATUS_RSP_LEN
+            MY_STATUS_RSP_LEN,
+            MY_LOAD_ERR_RSP_LEN
         };
         static uint8_t drv_idx = 0;
         static bool read_phase = false;
+        static bool load_phase = false; //There are 2 major phases: polling motor shaft load error and polling status
 
         if (drv_idx >= MY_DRIVES_NUM) //Debug header
         {
@@ -129,14 +161,24 @@ namespace drv
             if (read_phase)
             {
                 uint8_t i = MY_DRV_RESPONSE_TIMEOUT;
-                while ((Serial.available() < rsp_length[drv_cmds::read_shaft_status]) && (i > 0))
+                while ((Serial.available() < rsp_length[load_phase ? drv_cmds::read_shaft_error : drv_cmds::read_shaft_status])
+                    && (i > 0))
                 {
                     delay(1);
                     --i;
                 };
                 bool p = i > 0;
                 present[drv_idx] = p;
-                if (p) err[drv_idx] = parse_shaft_status_response(drv_idx);
+                if (p) {
+                    if (load_phase)
+                    {
+                        load[drv_idx] = parse_shaft_error_response(drv_idx);
+                    }
+                    else
+                    {
+                        err[drv_idx] = parse_shaft_status_response(drv_idx);
+                    }
+                }
                 else err[drv_idx] = false;
                 discard_in_buffer();
             }
@@ -144,12 +186,16 @@ namespace drv
             {
                 set_addr(drv_idx + 1_ui8);
                 delayMicroseconds(1);
-                Serial.write(get_drv_command(drv_cmds::read_shaft_status, drv_idx));
+                Serial.write(get_drv_command(load_phase ? drv_cmds::read_shaft_error : drv_cmds::read_shaft_status, drv_idx));
             }
         }
         if (read_phase)
         {
-            if (++drv_idx >= (MY_DRIVES_NUM + 1_ui8)) drv_idx = 0;
+            if (++drv_idx >= (MY_DRIVES_NUM + 1_ui8)) 
+            {
+                drv_idx = 0;
+                load_phase = !load_phase;
+            }
             read_phase = false;
         }
         else
@@ -166,5 +212,11 @@ namespace drv
     bool get_drv_present(uint8_t i)
     {
         return present[i];
+    }
+    uint8_t get_load(uint8_t i)
+    {
+        uint16_t res = static_cast<uint16_t>(abs(load[i])) >> 4; // divide by 16, should result in ~0.1 deg resolution
+        if (res > 0xFF) res = 0xFF;
+        return static_cast<uint8_t>(res);
     }
 } // namespace drv

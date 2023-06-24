@@ -17,14 +17,17 @@ namespace i2c
         uint8_t encoder_btn_pressed;
         uint8_t drv_error_bitfield;
         uint8_t drv_missing_bitfield;
-        uint8_t crc; //Convinient for alignment
+        uint8_t drv_load[MY_DRIVES_NUM];
+        uint8_t reserved1;
+        uint8_t crc;
     };
     static volatile memory_map_t map = {
         .encoder_pos = { 0, 0, 0 },
         .manual_override = 1000,
         .encoder_btn_pressed = 0,
         .drv_error_bitfield = 0,
-        .drv_missing_bitfield = 0
+        .drv_missing_bitfield = 0,
+        .drv_load = { 0, 0, 0 }
     };
     static volatile bool connected = false;
 
@@ -51,6 +54,7 @@ namespace i2c
     void init()
     {
         static_assert((sizeof(map.drv_error_bitfield) * __CHAR_BIT__) >= MY_DRIVES_NUM);
+        static_assert(sizeof(map) % 2 == 0); //16-bit word alignment required for receivend end DMA
 
         Wire.begin(MY_I2C_ADDR);
         Wire.onRequest(request_response);
@@ -129,6 +133,12 @@ namespace i2c
             //map.encoder_btn_pressed &= ~mask; I2C ISR handler clears this register, this ensures no missed presses
             buttons_mask |= mask;
         }
+        sei();
+    }
+    void set_load(uint8_t i, uint8_t v)
+    {
+        cli();
+        map.drv_load[i] = v;
         sei();
     }
 } // namespace i2c

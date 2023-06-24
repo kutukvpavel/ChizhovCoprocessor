@@ -58,6 +58,7 @@ void loop()
         i2c::set_drv_err_bit(i, drv::get_drv_err(i));
         i2c::set_drv_missing_bit(i, !drv::get_drv_present(i));
         i2c::set_encoder_position(i, encoders::get_position(i));
+        i2c::set_load(i, drv::get_load(i));
     }
     status = led_status::OK;
     if (i2c::get_drv_missing() > 0) status = led_status::drive_missing;
